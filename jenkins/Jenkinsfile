@@ -1,0 +1,36 @@
+pipeline {
+    agent any
+    environment{
+        AWS_ACCOUNT_ID=credentials('dev-aws-account')  // store as a secret - see 1_docker_build_push_to_ecr.txt
+        AWS_DEFAULT_REGION="ap-southeast-2" 
+        IMAGE_REPO_NAME="tauputa-php"
+        IMAGE_TAG="latest"
+        REPOSITORY_URI = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${IMAGE_REPO_NAME}"
+    }
+
+    stages {
+        stage('Logging into AWS ECR') {
+            steps {
+                sh "aws ecr get-login-password --region ${AWS_DEFAULT_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+            }
+        }
+        stage('Pulling The Docker Image') {
+            steps {
+                sh """
+                   docker images
+                   docker pull ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${IMAGE_REPO_NAME}:${IMAGE_TAG}
+                   docker images
+                """
+            }
+        }
+        stage('Creating Docker Container From the Image') {
+            steps {
+                sh """
+                    docker create -p 80:80 --name nginx ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${IMAGE_REPO_NAME}:${IMAGE_TAG}
+                    docker ps -a
+                """
+            }
+        }
+
+    }
+}
