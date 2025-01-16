@@ -2,7 +2,7 @@ pipeline {
     agent {
         docker {
             image 'docker:latest'
-            args '--privileged -u root:root'
+            args '--privileged -u root'
         }
     }
     environment{
@@ -22,7 +22,8 @@ pipeline {
                    apk add --no-cache aws-cli
                    aws --version
                    docker --version
-                   sleep 60
+                   aws ecr describe-repositories
+                   sleep 180 
                 """
             }
         }
