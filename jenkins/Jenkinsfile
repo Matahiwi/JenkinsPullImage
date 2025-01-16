@@ -1,5 +1,10 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'docker:latest'
+            args '--privileged'
+        }
+    }
     environment{
         AWS_ACCOUNT_ID=credentials('dev-aws-account')  // store as a secret - see 1_docker_build_push_to_ecr.txt
         AWS_DEFAULT_REGION="ap-southeast-2" 
@@ -10,6 +15,17 @@ pipeline {
     }
 
     stages {
+        stage('Installing aws cli into docker container') {
+            steps {
+                sh """
+                   apk update
+                   apk add --no-cache aws-cli
+                   aws --version
+                   docker --version
+                   sleep 60
+                """
+            }
+        }
         stage('Logging into AWS ECR') {
             steps {
                 sh "aws ecr get-login-password --region ${AWS_DEFAULT_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
