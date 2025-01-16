@@ -2,7 +2,7 @@ pipeline {
     agent {
         docker {
             image 'docker:latest'
-            args '--privileged'
+            args '--privileged -u root:root'
         }
     }
     environment{
